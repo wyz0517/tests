@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 # 安装python-telegram-bot库
-RUN pip install --no-cache-dir python-telegram-bot
+RUN pip install -r requirements.txt
 
 # 定义环境变量
 # 如果有需要可以设置，例如代理等
