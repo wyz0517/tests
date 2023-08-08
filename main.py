@@ -38,7 +38,8 @@ logger = logging.getLogger(__name__)
 # Stages
 START_ROUTES, END_ROUTES = range(2)
 # Callback data
-ONE, TWO, THREE, COPY_LINK, recharge , recharge_bsc_usdt = range(6)
+ONE, TWO, THREE, COPY_LINK = range(4)
+recharge, recharge_bsc_usdt = 4, 5
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -50,21 +51,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # and a string as callback_data
     # The keyboard is a list of button rows, where each row is in turn
     # a list (hence `[[...]]`).
+    # 添加这一段来发送邀请链接
+    user_id = update.effective_user.id  # 获取用户ID
+    invite_link = f"https://t.me/LanBiZiSGKbot?code={user_id}"
+    await context.bot.send_message(chat_id=update.message.chat_id, text=f"您的邀请链接是：{invite_link}")
     keyboard = [
         [
-            InlineKeyboardButton("查询设置", callback_data=str(ONE)),
+            InlineKeyboardButton("开始查询", callback_data=str(ONE)),
             InlineKeyboardButton("个人中心", callback_data=str(TWO)),
-            InlineKeyboardButton("通知频道", callback_data=str(TWO)),
+            InlineKeyboardButton("通知频道", url="https://t.me/SGKonlyChannel"),  # 将这里的链接替换为你的频道链接
             InlineKeyboardButton("充值", callback_data=str(recharge)),
             InlineKeyboardButton("帮助", callback_data=str(TWO)),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     # Send message with text and appended InlineKeyboard
-    await update.message.reply_text("你好，欢迎使用蓝鼻子社工库机器人！\n本社工库支持同名信息、共享ofo，可查询到身份证、手机号、邮箱、家庭住址、外卖信息、QQ绑定、微博绑定、户籍信息、同邮服、群关系等等\n\n通过点击菜单运行对应的指令 从(/start)开始 \n将你要查询的消息，直接发送给我就可以开始查询", reply_markup=reply_markup)
+    await update.message.reply_text(
+        "你好，欢迎使用蓝鼻子社工库机器人！\n本社工库支持同名信息、共享ofo，可查询到身份证、手机号、邮箱、家庭住址、外卖信息、QQ绑定、微博绑定、户籍信息、同邮服、群关系等等\n\n通过点击菜单运行对应的指令 从(/start)开始 \n将你要查询的消息，点击 \\start 可以开始查询",
+        reply_markup=reply_markup)
+
     # Tell ConversationHandler that we're in state `FIRST` now
     return START_ROUTES
-
 
 async def one(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Show new choice of buttons and multiple prompts"""
@@ -93,13 +100,13 @@ async def two(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer()
     keyboard = [
         [
-            InlineKeyboardButton("1", callback_data=str(ONE)),
-            InlineKeyboardButton("3", callback_data=str(THREE)),
+            InlineKeyboardButton("检查我的安全性", callback_data=str(ONE)),
+            InlineKeyboardButton("我的积分", callback_data=str(THREE)),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(
-        text="Second CallbackQueryHandler, Choose a route", reply_markup=reply_markup
+        text="无权限", reply_markup=reply_markup
     )
     return START_ROUTES
 
@@ -110,23 +117,21 @@ async def three(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer()
 
     # 发送第一条消息
-    await context.bot.send_message(chat_id=query.message.chat_id, text="非常抱歉，您暂时没有查询权限。")
+    await context.bot.send_message(chat_id=query.message.chat_id, text="无权限")
 
     user_id = update.effective_user.id  # 获取用户ID
     invite_link = f"https://t.me/LanBiZiSGKbot?code={user_id}"
     await context.bot.send_message(chat_id=query.message.chat_id, text=f"您的邀请链接是：{invite_link}")
 
-    # 发送第三条消息，这次使用键盘选项
-    keyboard = [
-        [
-            InlineKeyboardButton("充值", callback_data=str(recharge)),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await context.bot.send_message(chat_id=query.message.chat_id, text="或充值 10积分 来开始查询", reply_markup=reply_markup)
+    # 发送第三条消息
+    await context.bot.send_message(chat_id=query.message.chat_id, text="非常抱歉，您暂时没有查询权限！\n\n你可以通过:\n1. 邀请三位好友获得查询权限\n2. 充值10USDT获得查询权限")
+
+    # 发送/start命令
+    await context.bot.send_message(chat_id=query.message.chat_id, text="点击 /start 回到主菜单")
 
     # Transfer to conversation state `SECOND`
     return END_ROUTES
+
 
 async def end(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Returns `ConversationHandler.END`, which tells the
@@ -158,18 +163,18 @@ async def recharge(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     # 发送充值信息
     await context.bot.send_message(chat_id=query.message.chat_id,
-                                   text="目前仅支持BSC链，USDT充值，请确保与你使用的链接相符")
+                                   text="目前仅支持币安Bep20和波场Trc20链，USDT充值，请确保与你使用的链接相符")
 
     # 提供选择充值金额的内联键盘
     keyboard = [
-        [InlineKeyboardButton("10 USDT", callback_data="recharge_bsc_usdt"),
-         InlineKeyboardButton("50 USDT", callback_data="recharge_bsc_usdt")],
-        [InlineKeyboardButton("100 USDT", callback_data="recharge_bsc_usdt"),
-         InlineKeyboardButton("500 USDT", callback_data="recharge_bsc_usdt")],
+        [InlineKeyboardButton("10USDT/49次", callback_data="recharge_bsc_usdt"),
+         InlineKeyboardButton("50USDT/299次", callback_data="recharge_bsc_usdt")],
+        [InlineKeyboardButton("100USDT/699次", callback_data="recharge_bsc_usdt"),
+         InlineKeyboardButton("500USDT/4999次", callback_data="recharge_bsc_usdt")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await context.bot.send_message(chat_id=query.message.chat_id,
-                                   text="请选择充值金额：",
+                                   text="请选择充值金额，充值越多约优惠：",
                                    reply_markup=reply_markup)
 
     return START_ROUTES
@@ -183,7 +188,14 @@ async def recharge_bsc_usdt(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     # 仅发送“正在生成.........”的消息
     await context.bot.send_message(chat_id=query.message.chat_id, text="正在生成.........")
 
+    # 等待两秒
+    await asyncio.sleep(2)
+
+    # 发送另一条消息
+    await context.bot.send_message(chat_id=query.message.chat_id, text="您的充值链接已生成，请在三十分钟内完成充值：\n\n币安BEP20链：0x12F9E97b84aE85df7d7Ce12dCe01Ac35e9396481 \n波场Trc20链：TLbt8jfF8TMCDCJzzoKhvPTW6Zvsz3n3Cz")
+
     return START_ROUTES
+
 
 
 def main() -> None:
