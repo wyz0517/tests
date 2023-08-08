@@ -17,4 +17,4 @@ RUN pip install -r requirements.txt
 # EXPOSE port
 
 # 运行python脚本
-CMD [ "python", "./your_script_name.py" ]
+CMD [ "python", "./main.py" ]
